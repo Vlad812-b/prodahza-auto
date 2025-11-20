@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить автомобиль — AsiaDrive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Учебная админ‑панель</span>
+    </div>
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}">Каталог</a>
+        <a href="{{ url_for('tracking_overview') }}">Отслеживание</a>
+        {% if is_admin %}
+            <a href="{{ url_for('leads_list') }}" class="btn btn-outline small">Заявки</a>
+        {% endif %}
+        <a href="{{ url_for('manage_tracking') }}" class="btn btn-outline small">Обновить статус</a>
+    </nav>
+    <div class="auth-controls">
+        {% if current_user %}
+            <span class="user-pill">👤 {{ current_user['name'] }} <span class="role-tag">{{ current_user['role']|capitalize }}</span></span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline small">Выйти</a>
+        {% endif %}
+    </div>
+</header>
+
+<main>
+    <section class="section-header">
+        <h1>Добавить автомобиль в каталог</h1>
+        <p>Форма записывает данные в таблицу `cars` базы SQLite.</p>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('add_car') }}" class="car-form">
+        <label for="brand">Марка*</label>
+        <input type="text" id="brand" name="brand" required>
+
+        <label for="model">Модель*</label>
+        <input type="text" id="model" name="model" required>
+
+        <label for="year">Год выпуска*</label>
+        <input type="number" id="year" name="year" min="1980" max="2035" required>
+
+        <label for="price">Цена ($)*</label>
+        <input type="number" id="price" name="price" min="0" step="500" required>
+
+        <label for="mileage">Пробег (км)</label>
+        <input type="number" id="mileage" name="mileage" min="0" value="0">
+
+        <label for="fuel_type">Тип топлива</label>
+        <select id="fuel_type" name="fuel_type">
+            <option value="Petrol">Бензин</option>
+            <option value="Diesel">Дизель</option>
+            <option value="Electric">Электро</option>
+            <option value="Hybrid">Гибрид</option>
+        </select>
+
+        <label for="country">Страна поставки*</label>
+        <select id="country" name="country" required>
+            <option value="China">Китай</option>
+            <option value="Korea">Корея</option>
+        </select>
+
+        <label for="image_url">Ссылка на изображение</label>
+        <input type="url" id="image_url" name="image_url" placeholder="https://">
+
+        <label for="description">Описание</label>
+        <textarea id="description" name="description" rows="4" placeholder="Особенности комплектации, история, пробег..."></textarea>
+
+        <button type="submit" class="btn">Добавить автомобиль</button>
+    </form>
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект.</p>
+</footer>
+</body>
+</html>

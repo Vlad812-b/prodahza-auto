@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявки клиентов — AsiaDrive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="leads-page">
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Учебная CRM по импорту авто</span>
+    </div>
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}">Каталог</a>
+        <a href="{{ url_for('tracking_overview') }}">Отслеживание</a>
+        <a href="{{ url_for('add_car_form') }}" class="btn btn-outline small">Добавить авто</a>
+        <a href="{{ url_for('manage_tracking') }}" class="btn btn-outline small">Обновить статус</a>
+    </nav>
+    <div class="auth-controls">
+        {% if current_user %}
+        <span class="user-pill">👤 {{ current_user['name'] }} <span class="role-tag">{{ current_user['role']|capitalize }}</span></span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline small">Выйти</a>
+        {% endif %}
+    </div>
+</header>
+
+<main class="leads-list">
+    <section class="section-header">
+        <h1>Входящие заявки</h1>
+        <p>Каждая строка отражает запись в таблице `leads` в файле SQLite.</p>
+    </section>
+
+    {% if leads %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Клиент</th>
+                <th>Аккаунт</th>
+                <th>Контакты</th>
+                <th>Запрос</th>
+                <th>Страна</th>
+                <th>Бюджет</th>
+                <th>Дата</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for lead in leads %}
+            <tr>
+                <td>#{{ lead['id'] }}</td>
+                <td>{{ lead['name'] }}</td>
+                <td>{{ lead['name'] }}</td>
+                <td>
+                    {% if lead['user_name'] %}
+                        {{ lead['user_name'] }}
+                        {% if lead['user_role'] %}<div class="badge role">{{ lead['user_role'] }}</div>{% endif %}
+                        {% if lead['user_email'] %}<div class="micro">{{ lead['user_email'] }}</div>{% endif %}
+                    {% else %}
+                        Гость
+                    {% endif %}
+                </td>
+                <td>
+                    <div>{{ lead['phone'] }}</div>
+                    {% if lead['email'] %}<div>{{ lead['email'] }}</div>{% endif %}
+                </td>
+                <td>
+                    {% if lead['car_brand'] %}
+                        {{ lead['car_brand'] }} {{ lead['car_model'] }}
+                    {% elif lead['preferred_brand'] or lead['preferred_model'] %}
+                        {{ lead['preferred_brand'] }} {{ lead['preferred_model'] }}
+                    {% else %}
+                        Не указано
+                    {% endif %}
+                    {% if lead['comment'] %}
+                    <div class="lead-comment">{{ lead['comment'] }}</div>
+                    {% endif %}
+                </td>
+                <td>{{ lead['country'] or '—' }}</td>
+                <td>{% if lead['budget'] %}${{ "{:,}".format(lead['budget']) }}{% else %}—{% endif %}</td>
+                <td>{{ lead['created_at'] }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Заявок пока нет. Вернитесь на главную страницу и заполните форму.</p>
+        <a class="btn" href="{{ url_for('index') }}">На главную</a>
+    </div>
+    {% endif %}
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект.</p>
+</footer>
+</body>
+</html>
+

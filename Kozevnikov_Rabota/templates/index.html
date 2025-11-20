@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AsiaDrive — Автомобили из Кореи и Китая</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Импорт авто из Кореи и Китая</span>
+    </div>
+    <nav class="main-nav">
+        <a href="#catalog">Каталог</a>
+        <a href="{{ url_for('tracking_overview') }}">Отслеживание</a>
+        <a href="#request">Покупка</a>
+        {% if is_admin %}
+            <a href="{{ url_for('leads_list') }}" class="btn btn-outline small">Заявки (админ)</a>
+            <a href="{{ url_for('add_car_form') }}" class="btn btn-outline small">Добавить авто</a>
+            <a href="{{ url_for('manage_tracking') }}" class="btn btn-outline small">Обновить статус</a>
+        {% elif is_moderator %}
+            <a href="{{ url_for('add_car_form') }}" class="btn btn-outline small">Добавить авто</a>
+            <a href="{{ url_for('manage_tracking') }}" class="btn btn-outline small">Обновить статус</a>
+        {% elif current_user %}
+            <a href="#request" class="btn btn-outline small">Моя заявка</a>
+        {% endif %}
+    </nav>
+    <div class="auth-controls">
+        {% if current_user %}
+            <span class="user-pill">
+                👤 {{ current_user['name'] }}
+                <span class="role-tag">{{ current_user['role']|capitalize }}</span>
+            </span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline small">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login', next=request.full_path) }}" class="link-login">Войти</a>
+            <a href="{{ url_for('register', next=request.full_path) }}" class="btn small">Регистрация</a>
+        {% endif %}
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div>
+            <p class="eyebrow">Учебный проект • Flask + SQLite</p>
+            <h1>Подберём автомобиль из Кореи или Китая с прозрачной историей</h1>
+            <p>Каталог пополняется вручную, а заявки сразу попадают в базу данных — полностью готовое учебное решение для демонстрации фуллстек‑навыков.</p>
+            <div class="hero-actions">
+                <a class="btn" href="#catalog">Смотреть каталог</a>
+                <a class="btn btn-outline" href="#request">Оставить заявку</a>
+            </div>
+        </div>
+        <div class="hero-card">
+            <p>Последние обновления доставки:</p>
+            <ul>
+                {% set snapshot = tracking_map.values() | list %}
+                {% if snapshot %}
+                    {% for item in snapshot[:3] %}
+                    <li><strong>{{ item['status'] }}</strong> — {{ item['location'] }}</li>
+                    {% endfor %}
+                {% else %}
+                    <li>Статусы пока не добавлены</li>
+                {% endif %}
+            </ul>
+            <a class="link-login" href="{{ url_for('tracking_overview') }}">Смотреть карту статусов →</a>
+        </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    <section class="filters">
+        <form method="get" action="{{ url_for('index') }}" class="filter-form">
+            <label>
+                Страна
+                <select name="country">
+                    <option value="">Все</option>
+                    {% for country in countries %}
+                    <option value="{{ country }}" {% if country == selected_country %}selected{% endif %}>{{ country }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Модель или бренд
+                <input type="text" name="q" placeholder="например, Sonata" value="{{ search_query or '' }}">
+            </label>
+            <button type="submit" class="btn">Фильтровать</button>
+            <a class="link-reset" href="{{ url_for('index') }}">Сбросить</a>
+        </form>
+    </section>
+
+    <section id="catalog">
+        <div class="section-header">
+            <h2>Каталог готовых автомобилей</h2>
+            <p>Все данные берутся напрямую из таблицы SQLite — попробуйте добавить авто и обновить страницу.</p>
+        </div>
+        <div class="cars-container">
+            {% if cars %}
+                {% for car in cars %}
+                <article class="car-card">
+                    <div class="car-thumb">
+                        <img src="{{ car['image_url'] or 'https://placehold.co/600x400?text=AsiaDrive' }}"
+                             alt="{{ car['brand'] }} {{ car['model'] }}">
+                        <span class="badge">{{ car['country'] }}</span>
+                    </div>
+                    <div class="car-info">
+                        <h3>{{ car['brand'] }} {{ car['model'] }}</h3>
+                        <p class="price">${{ "{:,}".format(car['price']) }}</p>
+                        <ul class="car-stats">
+                            <li><strong>Год:</strong> {{ car['year'] }}</li>
+                            <li><strong>Пробег:</strong> {{ "{:,}".format(car['mileage'] or 0) }} км</li>
+                            <li><strong>Топливо:</strong> {{ car['fuel_type'] }}</li>
+                        </ul>
+                        {% set tracking = tracking_map.get(car['id']) %}
+                        {% if tracking %}
+                        <div class="tracking-chip">
+                            <span>{{ tracking['status'] }}</span>
+                            <span>•</span>
+                            <span>{{ tracking['location'] }}</span>
+                            {% if tracking['eta'] %}
+                            <span class="eta">ETA {{ tracking['eta'] }}</span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="tracking-chip tracking-chip--idle">
+                            Статус доставки ещё не указан
+                        </div>
+                        {% endif %}
+                        <p class="car-desc">{{ car['description'] or 'Описание не указано.' }}</p>
+                        <button class="btn btn-outline" data-car="{{ car['id'] }}" data-car-name="{{ car['brand'] }} {{ car['model'] }}" onclick="prefillCar(this)">Хочу такой</button>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <p>Каталог пуст. Перейдите в раздел «Добавить авто», чтобы наполнить базу.</p>
+                    <a class="btn" href="{{ url_for('add_car_form') }}">Добавить автомобиль</a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section id="request" class="lead-section">
+        <div class="section-header">
+            <h2>Оставить заявку</h2>
+            <p>Форма ниже сохраняет все введённые данные в таблицу `leads`. После отправки менеджер увидит заявку в административном списке.</p>
+        </div>
+        {% set anchor = url_for('index') + '#request' %}
+        {% if current_user %}
+        <form method="post" action="{{ url_for('create_lead') }}" class="lead-form">
+            <div class="form-row">
+                <label>
+                    Имя*
+                    <input type="text" name="name" required>
+                </label>
+                <label>
+                    Телефон*
+                    <input type="tel" name="phone" required>
+                </label>
+                <label>
+                    Email
+                    <input type="email" name="email">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>
+                    Выбранный автомобиль
+                    <select name="car_id" id="car-select">
+                        <option value="">Выберите из каталога</option>
+                        {% for car in cars %}
+                        <option value="{{ car['id'] }}">{{ car['brand'] }} {{ car['model'] }}, {{ car['year'] }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Предпочтительный бренд
+                    <input type="text" name="preferred_brand">
+                </label>
+                <label>
+                    Предпочтительная модель
+                    <input type="text" name="preferred_model">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>
+                    Страна поставки
+                    <select name="preferred_country">
+                        <option value="">Неважно</option>
+                        <option value="China">Китай</option>
+                        <option value="Korea">Корея</option>
+                    </select>
+                </label>
+                <label>
+                    Бюджет ($)
+                    <input type="number" name="budget" min="0" step="500">
+                </label>
+            </div>
+            <label>
+                Комментарий
+                <textarea name="comment" rows="4" placeholder="Опишите требования: год, комплектация, цвет..."></textarea>
+            </label>
+            <button type="submit" class="btn">Отправить заявку</button>
+        </form>
+        {% else %}
+        <div class="auth-gate">
+            <p>Чтобы оформить заказ и зафиксировать покупку, авторизуйтесь или создайте аккаунт. Просматривать каталог и статусы доставки можно без регистрации.</p>
+            <div class="hero-actions">
+                <a class="btn" href="{{ url_for('register', next=anchor) }}">Регистрация</a>
+                <a class="btn btn-outline" href="{{ url_for('login', next=anchor) }}">Войти</a>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект. Все данные демонстрационные.</p>
+</footer>
+
+<script>
+function prefillCar(button) {
+    const select = document.getElementById('car-select');
+    const carId = button.getAttribute('data-car');
+    if (select) {
+        select.value = carId;
+        document.getElementById('request').scrollIntoView({behavior: 'smooth'});
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация — AsiaDrive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page">
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Создание аккаунта</span>
+    </div>
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}">Каталог</a>
+        <a href="{{ url_for('login', next=next_url) }}">Войти</a>
+    </nav>
+</header>
+
+<main class="auth-container">
+    <section class="section-header">
+        <h1>Регистрация клиента</h1>
+        <p>После регистрации вы сможете оставлять заявки и отслеживать статусы доставки.</p>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('register') }}" class="auth-form">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <label>
+            Имя и фамилия
+            <input type="text" name="name" required placeholder="Иван Иванов">
+        </label>
+
+        <label>
+            Email
+            <input type="email" name="email" required placeholder="user@example.com">
+        </label>
+
+        <label>
+            Телефон
+            <input type="tel" name="phone" placeholder="+82 10 1234 5678">
+        </label>
+
+        <label>
+            Пароль
+            <input type="password" name="password" required>
+        </label>
+
+        <label>
+            Повторите пароль
+            <input type="password" name="password_confirm" required>
+        </label>
+
+        <button type="submit" class="btn">Создать аккаунт</button>
+        <p class="auth-switch">Уже есть аккаунт? <a href="{{ url_for('login', next=next_url) }}">Войти</a></p>
+    </form>
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект.</p>
+</footer>
+</body>
+</html>
+

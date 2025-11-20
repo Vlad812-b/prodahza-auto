@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отслеживание доставки — AsiaDrive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="tracking-page">
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Статусы доставки</span>
+    </div>
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}">Каталог</a>
+        {% if is_admin or is_moderator %}
+        <a href="{{ url_for('manage_tracking') }}" class="btn btn-outline small">Управление статусами</a>
+        {% endif %}
+    </nav>
+    <div class="auth-controls">
+        {% if current_user %}
+        <span class="user-pill">👤 {{ current_user['name'] }} <span class="role-tag">{{ current_user['role']|capitalize }}</span></span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline small">Выйти</a>
+        {% else %}
+        <a href="{{ url_for('login', next=request.full_path) }}" class="link-login">Войти</a>
+        {% endif %}
+    </div>
+</header>
+
+<main class="tracking-board">
+    <section class="section-header">
+        <h1>Маршруты и статусы автомобилей</h1>
+        <p>Данные берутся из таблицы `tracking_events`. Последние обновления вверху списка.</p>
+    </section>
+
+    {% if events %}
+    <div class="timeline">
+        {% for event in events %}
+        <article class="timeline-card">
+            <div class="timeline-header">
+                <h3>{{ event['brand'] }} {{ event['model'] }}</h3>
+                <span class="badge">{{ event['country'] }}</span>
+            </div>
+            <p class="status-line"><strong>{{ event['status'] }}</strong> — {{ event['location'] }}</p>
+            {% if event['eta'] %}<p class="eta-line">Ожидаемое прибытие: {{ event['eta'] }}</p>{% endif %}
+            {% if event['comment'] %}<p class="car-desc">{{ event['comment'] }}</p>{% endif %}
+            <time>{{ event['updated_at'] }}</time>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Статусы ещё не добавлены. Авторизуйтесь и добавьте информацию в разделе управления.</p>
+        <a class="btn" href="{{ url_for('manage_tracking') }}">Обновить статус</a>
+    </div>
+    {% endif %}
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект.</p>
+</footer>
+</body>
+</html>
+

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление статусами — AsiaDrive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="tracking-manage-page">
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Обновление статусов</span>
+    </div>
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}">Каталог</a>
+        <a href="{{ url_for('tracking_overview') }}">Публичные статусы</a>
+        {% if is_admin %}
+            <a href="{{ url_for('leads_list') }}" class="btn btn-outline small">Заявки</a>
+        {% endif %}
+        <a href="{{ url_for('add_car_form') }}" class="btn btn-outline small">Добавить авто</a>
+    </nav>
+    <div class="auth-controls">
+        {% if current_user %}
+        <span class="user-pill">👤 {{ current_user['name'] }} <span class="role-tag">{{ current_user['role']|capitalize }}</span></span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline small">Выйти</a>
+        {% endif %}
+    </div>
+</header>
+
+<main class="tracking-manage">
+    <section class="section-header">
+        <h1>Добавить новое событие</h1>
+        <p>Форма ниже записывает данные в таблицу `tracking_events` и связывает их с выбранным автомобилем.</p>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    <form method="post" class="tracking-form">
+        <label>
+            Автомобиль
+            <select name="car_id" required>
+                <option value="">Выберите авто</option>
+                {% for car in cars %}
+                <option value="{{ car['id'] }}">{{ car['brand'] }} {{ car['model'] }} ({{ car['year'] }})</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label>
+            Статус
+            <input type="text" name="status" required placeholder="Например, На погрузке, в пути">
+        </label>
+
+        <label>
+            Местоположение
+            <input type="text" name="location" required placeholder="Порт Пусан, Южная Корея">
+        </label>
+
+        <label>
+            ETA
+            <input type="text" name="eta" placeholder="Например, 25.11 / 1 неделя">
+        </label>
+
+        <label>
+            Комментарий
+            <textarea name="comment" rows="3" placeholder="Дополнительные детали по доставке"></textarea>
+        </label>
+
+        <button type="submit" class="btn">Добавить запись</button>
+    </form>
+
+    <section class="section-header">
+        <h2>Недавние события</h2>
+    </section>
+
+    <div class="timeline">
+        {% if events %}
+            {% for event in events %}
+            <article class="timeline-card">
+                <div class="timeline-header">
+                    <h3>{{ event['brand'] }} {{ event['model'] }}</h3>
+                </div>
+                <p class="status-line"><strong>{{ event['status'] }}</strong> — {{ event['location'] }}</p>
+                {% if event['eta'] %}<p class="eta-line">ETA: {{ event['eta'] }}</p>{% endif %}
+                {% if event['comment'] %}<p class="car-desc">{{ event['comment'] }}</p>{% endif %}
+                <time>{{ event['updated_at'] }}</time>
+            </article>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <p>Событий пока нет.</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект.</p>
+</footer>
+</body>
+</html>
+

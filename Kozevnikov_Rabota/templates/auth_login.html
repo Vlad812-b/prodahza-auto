@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — AsiaDrive</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page">
+<header class="site-header">
+    <div class="branding">
+        <span class="logo">AsiaDrive</span>
+        <span class="tagline">Личный кабинет</span>
+    </div>
+    <nav class="main-nav">
+        <a href="{{ url_for('index') }}">Каталог</a>
+        <a href="{{ url_for('register', next=next_url) }}">Регистрация</a>
+    </nav>
+</header>
+
+<main class="auth-container">
+    <section class="section-header">
+        <h1>Вход в аккаунт</h1>
+        <p>Авторизуйтесь, чтобы оформить покупку и отслеживать статусы автомобилей.</p>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <section class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('login') }}" class="auth-form">
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <label>
+            Email
+            <input type="email" name="email" required placeholder="user@example.com">
+        </label>
+
+        <label>
+            Пароль
+            <input type="password" name="password" required>
+        </label>
+
+        <button type="submit" class="btn">Войти</button>
+        <p class="auth-switch">Нет аккаунта? <a href="{{ url_for('register', next=next_url) }}">Создать</a></p>
+    </form>
+</main>
+
+<footer class="site-footer">
+    <p>AsiaDrive © {{ 2025 }}. Учебный проект.</p>
+</footer>
+</body>
+</html>
+
